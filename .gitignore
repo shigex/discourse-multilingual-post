@@ -1,0 +1,6 @@
+*.log
+*.swp
+.DS_Store
+node_modules/
+tmp/
+coverage/

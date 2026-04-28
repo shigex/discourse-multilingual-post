@@ -1,0 +1,14 @@
+plugins:
+  multilingual_post_enabled:
+    default: true
+    client: true
+  multilingual_post_show_origin_badge:
+    default: true
+    client: true
+  multilingual_post_force_language_selection_on_first_login:
+    default: true
+    client: true
+  multilingual_post_empty_profile_banner_dismiss_days:
+    default: 7
+  multilingual_post_translation_request_timeout_seconds:
+    default: 60

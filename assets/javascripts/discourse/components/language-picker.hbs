@@ -1,0 +1,18 @@
+<div class="mp-language-picker" role="button" {{on "click" this.toggle}}>
+  <span class="mp-current-language">🌐 {{this.currentLabel}} ▾</span>
+</div>
+
+{{#if this.open}}
+  <div class="mp-language-dropdown">
+    {{#each this.locales as |loc|}}
+      <button
+        type="button"
+        class="mp-language-option"
+        {{on "click" (fn this.select loc.code)}}
+      >
+        <span class="mp-locale-code">{{loc.code}}</span>
+        <span class="mp-locale-label">{{loc.label}}</span>
+      </button>
+    {{/each}}
+  </div>
+{{/if}}

@@ -1,0 +1,18 @@
+{{#if this.shouldShow}}
+  <div class="mp-empty-profile-banner">
+    <span class="mp-banner-text">
+      {{i18n "multilingual_post.empty_profile_banner.text"}}
+    </span>
+    <span class="mp-banner-actions">
+      <button type="button" class="mp-banner-edit" {{on "click" this.edit}}>
+        {{i18n "multilingual_post.empty_profile_banner.edit"}}
+      </button>
+      <button type="button" class="mp-banner-later" {{on "click" this.later}}>
+        {{i18n "multilingual_post.empty_profile_banner.later"}}
+      </button>
+      <button type="button" class="mp-banner-dismiss" {{on "click" this.dismiss}}>
+        {{i18n "multilingual_post.empty_profile_banner.dismiss"}}
+      </button>
+    </span>
+  </div>
+{{/if}}

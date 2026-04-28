@@ -1,0 +1,121 @@
+.mp-origin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  background: var(--primary-very-low, #f0f0f0);
+  color: var(--primary-medium, #555);
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+
+  .mp-origin-code {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .mp-mode-note {
+    color: var(--primary-low-mid, #888);
+    font-style: italic;
+  }
+}
+
+article[data-translatable="false"] .mp-origin-badge {
+  opacity: 0.6;
+}
+
+article[data-translate-bound="1"] .cooked {
+  cursor: pointer;
+}
+
+// Empty profile soft banner — sits above the topic list on the user's home.
+.mp-empty-profile-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  background: var(--success-low, #effaf3);
+  border: 1px solid var(--success-medium, #b7e4c7);
+  border-radius: 8px;
+
+  .mp-banner-text { flex: 1; }
+  .mp-banner-actions {
+    display: flex; gap: 8px;
+    button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      &.mp-banner-edit {
+        background: var(--tertiary, #006);
+        color: white;
+      }
+      &.mp-banner-dismiss,
+      &.mp-banner-later {
+        background: transparent;
+        color: var(--primary-medium);
+      }
+    }
+  }
+}
+
+// Header language picker — placed near the user avatar dropdown.
+.mp-language-picker {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover { background: var(--primary-very-low); }
+
+  .mp-current-language {
+    font-size: 13px;
+  }
+}
+
+// Onboarding modal (stacked steps).
+.mp-onboarding-modal {
+  .modal-inner-container { max-width: 480px; }
+
+  .mp-onboarding-step h2 {
+    margin-bottom: 8px;
+  }
+
+  .mp-language-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .mp-language-card {
+    padding: 12px;
+    border: 1px solid var(--primary-low);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+
+    &.suggested {
+      border-color: var(--tertiary);
+      background: var(--tertiary-very-low);
+    }
+    &.selected {
+      border-color: var(--success);
+      background: var(--success-low);
+      font-weight: 600;
+    }
+  }
+}
+
+// Mobile tweaks
+@media (max-width: 600px) {
+  .mp-onboarding-modal .modal-inner-container { max-width: 100vw; }
+  .mp-language-grid { grid-template-columns: 1fr; }
+  .mp-language-picker { padding: 0 8px; }
+}

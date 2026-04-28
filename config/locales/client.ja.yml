@@ -1,0 +1,37 @@
+ja:
+  js:
+    multilingual_post:
+      origin_badge:
+        viewing_translation: "(翻訳表示中)"
+        viewing_original: "(原文表示中)"
+        translating: "🔄 翻訳中..."
+      onboarding:
+        title: "言語を選んでください"
+        subtitle: "投稿はこの言語で表示します。いつでも切り替えできます。"
+        suggested: "ブラウザの設定から推測"
+        show_more: "他の言語を表示"
+        save: "次へ"
+      onboarding_username:
+        title: "ユーザー名を決めてください"
+        hint: "他の住人に表示される名前です。表示名はあとで変更できます。"
+        save: "次へ"
+      onboarding_profile:
+        title: "あなたについてひとこと（任意）"
+        bio_placeholder: "自己紹介を一言..."
+        spoken_languages: "話せる言語"
+        open_to:
+          title: "一緒にしたいこと"
+          coffee_chat: "コーヒーチャット"
+          dinner_buddy: "夕食仲間"
+          language_exchange: "言語交換"
+          stroll: "近所散策"
+          study: "勉強仲間"
+        skip: "あとで設定"
+        save: "次へ"
+      empty_profile_banner:
+        text: "🌱 まだプロフィールが空です。一言だけでも書いてみると、他の住人があなたのことを知るきっかけになります。"
+        edit: "プロフィールを編集"
+        dismiss: "閉じる"
+        later: "あとで"
+      empty_bio_placeholder: "🌱 まだ自己紹介がありません"
+      language_picker_label: "表示言語"

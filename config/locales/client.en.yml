@@ -1,0 +1,43 @@
+en:
+  js:
+    multilingual_post:
+      origin_badge:
+        viewing_translation: "(showing translation)"
+        viewing_original: "(showing original)"
+        translating: "🔄 Translating..."
+      onboarding:
+        title: "Choose your language"
+        subtitle: "We'll show posts in this language. You can switch any time."
+        suggested: "Based on your browser"
+        show_more: "Show more languages"
+        save: "Continue"
+      onboarding_username:
+        title: "Pick a username"
+        hint: "Others will see this name. You can change your display name later."
+        save: "Continue"
+      onboarding_profile:
+        title: "Tell others a bit about you (optional)"
+        bio_placeholder: "One line about yourself..."
+        spoken_languages: "I can speak"
+        open_to:
+          title: "I'm open to"
+          coffee_chat: "Coffee chats"
+          dinner_buddy: "Dinner buddies"
+          language_exchange: "Language exchange"
+          stroll: "Walks around the area"
+          study: "Study buddies"
+        skip: "Skip for now"
+        save: "Continue"
+      empty_profile_banner:
+        text: "🌱 Your profile is empty. A short line helps neighbors get to know you."
+        edit: "Edit profile"
+        dismiss: "Dismiss"
+        later: "Remind me later"
+      empty_bio_placeholder: "🌱 No bio yet"
+      language_picker_label: "Display language"
+    site_settings:
+      multilingual_post_enabled: "Enable per-post and per-profile multilingual translation."
+      multilingual_post_show_origin_badge: "Display the source-language badge on each post."
+      multilingual_post_force_language_selection_on_first_login: "Force first-time users to choose a display language before reaching the main page."
+      multilingual_post_empty_profile_banner_dismiss_days: "Days the empty-profile banner stays hidden after a user dismisses it."
+      multilingual_post_translation_request_timeout_seconds: "Timeout (seconds) for each request to the local LLM."
