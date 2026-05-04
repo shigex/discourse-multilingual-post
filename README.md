@@ -2,7 +2,7 @@
 
 Per-post and per-profile translation cached by user-preferred locale, served from a self-hosted local LLM.
 
-Built originally for [Bayview Multilingual BBS](https://github.com/shigex/multilingal-bbs) — a 250-resident share-house forum where 80% of residents are non-Japanese speakers.
+Built originally for [Bayview Multilingual BBS](https://github.com/shigex/multilingual-bbs) — a 250-resident share-house forum where 80% of residents are non-Japanese speakers.
 
 ## What it does
 
