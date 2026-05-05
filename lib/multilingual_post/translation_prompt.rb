@@ -1,53 +1,86 @@
 # frozen_string_literal: true
 
 module MultilingualPost
+  # Renders the TranslateGemma chat template for a single (source, target, text) tuple.
+  #
+  # TranslateGemma 12B has a specialized chat template that does NOT pass through
+  # vllm-mlx's OpenAI-compatible /chat/completions endpoint (the per-message
+  # source_lang_code / target_lang_code fields are stripped before reaching the
+  # tokenizer). We render the template ourselves and submit to /v1/completions
+  # as a raw prompt. One call produces ONE target-language translation.
   module TranslationPrompt
-    SYSTEM = <<~PROMPT
-      You are a translation engine for a 250-resident multilingual share-house forum.
-
-      Detect the source language of the message. Then translate it to each of the
-      target locales requested by the user message.
-
-      Rules:
-      - Preserve emoji, @mentions (@username), and URLs as-is.
-      - Keep colloquial / casual tone — do not formalize chat-style messages.
-      - Do NOT translate proper nouns (Bayview, building/floor names, brand names).
-      - For Chinese: zh-CN = Simplified, zh-TW = Traditional. Do not mix.
-      - Output STRICT JSON only. No markdown, no commentary.
-      - Schema: {"source": "<bcp-47>", "translations": {"<bcp-47>": "<text>", ...}}
-
-      If the message is empty or untranslatable, return:
-      {"source": "<your best guess>", "translations": {}}
-    PROMPT
-
-    LOCALE_LABELS = {
-      "ja" => "Japanese (ja)",
-      "en" => "English (en)",
-      "ko" => "Korean (ko)",
-      "de" => "German (de)",
-      "es" => "Spanish (es)",
-      "zh-CN" => "Simplified Chinese (zh-CN)",
-      "zh-TW" => "Traditional Chinese (zh-TW)",
-      "fr" => "French (fr)",
-      "pt" => "Portuguese (pt)",
-      "it" => "Italian (it)",
-      "ru" => "Russian (ru)",
-      "bn" => "Bengali (bn)",
-      "vi" => "Vietnamese (vi)",
-      "id" => "Indonesian (id)",
-      "pl" => "Polish (pl)",
+    # Discourse uses BCP-47 with region (zh-CN, zh-TW). TranslateGemma's chat
+    # template ships with `zh-TW` and `zh-Hans` / `zh-Hant` but NOT `zh-CN`.
+    # All Chinese variants render as "Chinese" in the prompt regardless;
+    # the actual script (Simplified vs Traditional) is steered by the code.
+    LOCALE_TO_TRANSLATEGEMMA = {
+      "zh-CN" => "zh-Hans",
+      # zh-TW passes through (template ships it)
     }.freeze
 
-    def self.user_message(text:, targets:)
-      labelled = targets.map { |loc| LOCALE_LABELS.fetch(loc, loc) }.join(", ")
-      <<~MSG
-        Target locales: #{labelled}
+    # ISO 639-1 → English language name. Mirrors the (much larger) `languages`
+    # dict in chat_template.jinja for codes we actually use.
+    LANGUAGE_NAMES = {
+      "ja" => "Japanese",
+      "en" => "English",
+      "ko" => "Korean",
+      "de" => "German",
+      "es" => "Spanish",
+      "fr" => "French",
+      "pt" => "Portuguese",
+      "it" => "Italian",
+      "ru" => "Russian",
+      "bn" => "Bengali",
+      "vi" => "Vietnamese",
+      "id" => "Indonesian",
+      "pl" => "Polish",
+      "zh-Hans" => "Chinese",
+      "zh-Hant" => "Chinese",
+      "zh-TW" => "Chinese",
+      "zh-CN" => "Chinese", # mapped before render, but keep for safety
+      "zh" => "Chinese",
+    }.freeze
 
-        Message:
-        """
-        #{text}
-        """
-      MSG
+    module_function
+
+    # Map a Discourse locale to the form TranslateGemma's template accepts.
+    def normalize_locale(locale)
+      LOCALE_TO_TRANSLATEGEMMA.fetch(locale.to_s, locale.to_s)
+    end
+
+    def language_name(locale)
+      LANGUAGE_NAMES.fetch(normalize_locale(locale), locale.to_s)
+    end
+
+    # Render the exact prompt that TranslateGemma's chat_template.jinja
+    # produces for {role:user, content:[{type:text, source_lang_code, target_lang_code, text}]}
+    # with add_generation_prompt=True.
+    #
+    # Reference output (verified against the actual tokenizer):
+    #   <bos><start_of_turn>user
+    #   You are a professional Japanese (ja) to English (en) translator. ...
+    #   Produce only the English translation, ...:
+    #
+    #
+    #   {text}<end_of_turn>
+    #   <start_of_turn>model
+    #
+    def render(source_locale:, target_locale:, text:)
+      src = normalize_locale(source_locale)
+      tgt = normalize_locale(target_locale)
+      src_name = language_name(src)
+      tgt_name = language_name(tgt)
+
+      <<~PROMPT
+        <bos><start_of_turn>user
+        You are a professional #{src_name} (#{src}) to #{tgt_name} (#{tgt}) translator. Your goal is to accurately convey the meaning and nuances of the original #{src_name} text while adhering to #{tgt_name} grammar, vocabulary, and cultural sensitivities.
+        Produce only the #{tgt_name} translation, without any additional explanations or commentary. Please translate the following #{src_name} text into #{tgt_name}:
+
+
+        #{text}<end_of_turn>
+        <start_of_turn>model
+
+      PROMPT
     end
   end
 end

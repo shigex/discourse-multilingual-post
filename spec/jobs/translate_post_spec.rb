@@ -18,9 +18,9 @@ describe Jobs::TranslatePost do
     translations = expected_targets.index_with { |loc| "translated to #{loc}" }
 
     expect(llm).to receive(:translate)
-      .with(text: post.raw, targets: expected_targets)
+      .with(text: post.raw, source_locale: "ja", targets: expected_targets)
       .and_return(MultilingualPost::LlmClient::Result.new(
-        source_locale: "ja", translations: translations,
+        source_locale: "ja", translations: translations, failed_targets: [],
       ))
 
     described_class.new.execute(post_id: post.id)
@@ -40,6 +40,7 @@ describe Jobs::TranslatePost do
       MultilingualPost::LlmClient::Result.new(
         source_locale: "ja",
         translations: targets.index_with { |l| "x" },
+        failed_targets: [],
       )
     )
 

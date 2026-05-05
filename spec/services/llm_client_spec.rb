@@ -31,62 +31,122 @@ describe MultilingualPost::LlmClient do
   end
 
   describe "#translate" do
-    let(:targets) { %w[en ko de] }
-    let(:llm_response_json) do
-      {
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: '{"source":"ja","translations":{"en":"Hello","ko":"안녕","de":"Hallo"}}',
-            },
-          },
-        ],
-      }.to_json
-    end
+    let(:source_locale) { "ja" }
+    let(:source_text) { "こんにちは" }
 
-    it "POSTs to /chat/completions with Cloudflare Access service token headers" do
-      stub = stub_request(:post, "#{base_url}/chat/completions").with(
-        headers: {
+    def stub_completion(target_text:, status: 200, body_override: nil)
+      stub_request(:post, "#{base_url}/completions")
+        .with(headers: {
           "Content-Type" => "application/json",
           "CF-Access-Client-Id" => "id-xxx",
           "CF-Access-Client-Secret" => "sec-xxx",
-        },
-      ).to_return(status: 200, body: llm_response_json, headers: { "Content-Type" => "application/json" })
+        })
+        .to_return(
+          status: status,
+          body: body_override || { choices: [{ text: target_text, finish_reason: "stop" }] }.to_json,
+          headers: { "Content-Type" => "application/json" },
+        )
+    end
 
-      result = client.translate(text: "こんにちは", targets: targets)
+    it "issues one POST to /v1/completions per target language and aggregates results" do
+      stub_completion(target_text: "Hello") # webmock returns same body for all matching requests
 
-      expect(stub).to have_been_requested
+      result = client.translate(text: source_text, source_locale: source_locale, targets: %w[en ko de])
+
+      # 3 targets × 1 request each
+      expect(WebMock).to have_requested(:post, "#{base_url}/completions").times(3)
       expect(result.source_locale).to eq("ja")
-      expect(result.translations).to eq("en" => "Hello", "ko" => "안녕", "de" => "Hallo")
+      expect(result.translations.keys).to match_array(%w[en ko de])
+      expect(result.failed_targets).to be_empty
     end
 
-    it "raises a recognizable error on 5xx (so Sidekiq retries)" do
-      stub_request(:post, "#{base_url}/chat/completions").to_return(status: 503, body: "boom")
+    it "renders the TranslateGemma chat template (with source/target language names) into the prompt" do
+      captured_bodies = []
+      stub_request(:post, "#{base_url}/completions").with do |req|
+        captured_bodies << JSON.parse(req.body)
+        true
+      end.to_return(status: 200, body: { choices: [{ text: "ok" }] }.to_json)
 
-      expect { client.translate(text: "x", targets: targets) }
-        .to raise_error(MultilingualPost::LlmClient::TransientError)
+      client.translate(text: source_text, source_locale: "ja", targets: %w[en])
+
+      prompt = captured_bodies.first["prompt"]
+      expect(prompt).to include("Japanese (ja)")
+      expect(prompt).to include("English (en)")
+      expect(prompt).to include("<start_of_turn>user")
+      expect(prompt).to include("<start_of_turn>model")
+      expect(prompt).to include(source_text)
     end
 
-    it "raises a permanent error on 401 (Service Token rejected)" do
-      stub_request(:post, "#{base_url}/chat/completions").to_return(status: 401, body: "{}")
+    it "maps zh-CN to zh-Hans in the rendered prompt (TranslateGemma doesn't ship zh-CN)" do
+      captured = nil
+      stub_request(:post, "#{base_url}/completions").with do |req|
+        captured = JSON.parse(req.body)
+        true
+      end.to_return(status: 200, body: { choices: [{ text: "你好" }] }.to_json)
 
-      expect { client.translate(text: "x", targets: targets) }
-        .to raise_error(MultilingualPost::LlmClient::AuthError)
+      client.translate(text: source_text, source_locale: "ja", targets: %w[zh-CN])
+
+      expect(captured["prompt"]).to include("(zh-Hans)") # mapped form
+      expect(captured["prompt"]).not_to include("(zh-CN)")
     end
 
-    it "raises on malformed JSON in LLM output" do
-      malformed = {
-        choices: [{ message: { role: "assistant", content: "not json at all" } }],
-      }.to_json
-      stub_request(:post, "#{base_url}/chat/completions").to_return(
-        status: 200,
-        body: malformed,
-        headers: { "Content-Type" => "application/json" },
-      )
+    it "leaves zh-TW as-is (already in TranslateGemma's language map)" do
+      captured = nil
+      stub_request(:post, "#{base_url}/completions").with do |req|
+        captured = JSON.parse(req.body)
+        true
+      end.to_return(status: 200, body: { choices: [{ text: "你好" }] }.to_json)
 
-      expect { client.translate(text: "x", targets: targets) }
-        .to raise_error(MultilingualPost::LlmClient::InvalidResponseError)
+      client.translate(text: source_text, source_locale: "ja", targets: %w[zh-TW])
+
+      expect(captured["prompt"]).to include("(zh-TW)")
+    end
+
+    it "raises TransientError on 5xx so Sidekiq retries the whole job" do
+      stub_request(:post, "#{base_url}/completions").to_return(status: 503, body: "boom")
+
+      expect {
+        client.translate(text: source_text, source_locale: "ja", targets: %w[en ko])
+      }.to raise_error(described_class::TransientError)
+    end
+
+    it "raises AuthError on 401 (Service Token rejected)" do
+      stub_request(:post, "#{base_url}/completions").to_return(status: 401, body: "{}")
+
+      expect {
+        client.translate(text: source_text, source_locale: "ja", targets: %w[en])
+      }.to raise_error(described_class::AuthError)
+    end
+
+    it "raises AuthError on 403 (Cloudflare Access blocked)" do
+      stub_request(:post, "#{base_url}/completions").to_return(status: 403, body: "")
+
+      expect {
+        client.translate(text: source_text, source_locale: "ja", targets: %w[en])
+      }.to raise_error(described_class::AuthError)
+    end
+
+    it "puts target into failed_targets when LLM returns an empty completion (permanent skip)" do
+      stub_request(:post, "#{base_url}/completions")
+        .to_return(status: 200, body: { choices: [{ text: "" }] }.to_json)
+        .then.to_return(status: 200, body: { choices: [{ text: "Hello" }] }.to_json)
+
+      result = client.translate(text: source_text, source_locale: "ja", targets: %w[en ko])
+
+      # one target failed (empty), the other succeeded
+      expect(result.failed_targets.length + result.translations.length).to eq(2)
+    end
+
+    it "returns an empty Result without HTTP calls when text is blank" do
+      result = client.translate(text: "  ", source_locale: "ja", targets: %w[en ko])
+      expect(result.translations).to be_empty
+      expect(WebMock).not_to have_requested(:post, "#{base_url}/completions")
+    end
+
+    it "returns an empty Result without HTTP calls when targets is empty" do
+      result = client.translate(text: "hello", source_locale: "ja", targets: [])
+      expect(result.translations).to be_empty
+      expect(WebMock).not_to have_requested(:post, "#{base_url}/completions")
     end
   end
 end

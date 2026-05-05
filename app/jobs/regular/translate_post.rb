@@ -15,10 +15,10 @@ module Jobs
       return if raw.strip.empty?
 
       llm = MultilingualPost::LlmClient.from_env
-      targets = MultilingualPost::TIER1_LOCALES - [post.user.locale.to_s]
+      source = post.user.locale.to_s
+      targets = MultilingualPost::TIER1_LOCALES - [source]
 
-      result = llm.translate(text: raw, targets: targets)
-      source = result.source_locale.presence || post.user.locale.to_s
+      result = llm.translate(text: raw, source_locale: source, targets: targets)
 
       result.translations.each do |locale, translated|
         next if translated.blank?

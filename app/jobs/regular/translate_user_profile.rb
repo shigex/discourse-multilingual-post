@@ -21,16 +21,15 @@ module Jobs
         text = read_field(user, profile, field)
         next if text.blank?
 
-        targets = MultilingualPost::TIER1_LOCALES - [user.locale.to_s]
+        source = user.locale.to_s
+        targets = MultilingualPost::TIER1_LOCALES - [source]
 
         begin
-          result = llm.translate(text: text, targets: targets)
+          result = llm.translate(text: text, source_locale: source, targets: targets)
         rescue MultilingualPost::LlmClient::AuthError, MultilingualPost::LlmClient::InvalidResponseError
           # Permanent failures: skip rather than blocking retries forever.
           next
         end
-
-        source = result.source_locale.presence || user.locale.to_s
 
         result.translations.each do |locale, translated|
           next if translated.blank?
