@@ -10,13 +10,17 @@ en:
         subtitle: "We'll show posts in this language. You can switch any time."
         suggested: "Based on your browser"
         show_more: "Show more languages"
+        tier2_aria: "Additional languages (translated on demand)"
         save: "Continue"
       onboarding_username:
         title: "Pick a username"
         hint: "Others will see this name. You can change your display name later."
+        label: "Username"
+        constraint: "3–20 characters; letters, numbers, underscore."
         save: "Continue"
       onboarding_profile:
         title: "Tell others a bit about you (optional)"
+        bio_label: "Short bio"
         bio_placeholder: "One line about yourself..."
         spoken_languages: "I can speak"
         open_to:
@@ -32,9 +36,12 @@ en:
         text: "🌱 Your profile is empty. A short line helps neighbors get to know you."
         edit: "Edit profile"
         dismiss: "Dismiss"
+        dismiss_aria: "Dismiss for a week"
         later: "Remind me later"
+        aria_label: "Profile setup reminder"
       empty_bio_placeholder: "🌱 No bio yet"
       language_picker_label: "Display language"
+      language_picker_menu_aria: "Choose a display language"
     site_settings:
       multilingual_post_enabled: "Enable per-post and per-profile multilingual translation."
       multilingual_post_show_origin_badge: "Display the source-language badge on each post."

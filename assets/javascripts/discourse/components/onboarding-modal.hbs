@@ -1,116 +1,210 @@
-<div class="mp-onboarding-modal">
-  {{#if (eq this.step 1)}}
-    <div class="mp-onboarding-step">
-      <h2>{{i18n "multilingual_post.onboarding.title"}}</h2>
-      <p>{{i18n "multilingual_post.onboarding.subtitle"}}</p>
-      <p class="mp-suggested-hint">
-        {{i18n "multilingual_post.onboarding.suggested"}}: {{this.suggestedLocale}}
-      </p>
+{{!--
+  Wrapped in <DModal> so we get free Esc-to-close, focus trap, click-outside,
+  aria-modal, and consistent styling with the rest of Discourse. The outer
+  modal cannot be dismissed by Esc on step 1 (PLAN.md says language selection
+  is forced) — we control that with @dismissable below.
 
-      <div class="mp-language-grid">
-        {{#each this.tier1 as |loc|}}
-          <button
-            type="button"
-            class="mp-language-card
-              {{if (eq loc.code this.suggestedLocale) 'suggested'}}
-              {{if (eq loc.code this.selectedLocale) 'selected'}}"
-            {{on "click" (fn this.selectLocale loc.code)}}
-          >
-            <div>{{loc.label}}</div>
-            <small>{{loc.code}}</small>
-          </button>
-        {{/each}}
-      </div>
+  We use the new <:headline> / <:body> / <:footer> blocks from Discourse's
+  modern modal API instead of building our own scaffold.
+--}}
+<DModal
+  @title={{this.modalTitle}}
+  @closeModal={{@closeModal}}
+  @dismissable={{this.dismissable}}
+  @bodyClass="mp-onboarding-modal"
+>
+  <:body>
+    {{#if (eq this.step 1)}}
+      <div class="mp-onboarding-step" data-step="1">
+        <h2 id="mp-onboarding-title-1">
+          {{i18n "multilingual_post.onboarding.title"}}
+        </h2>
+        <p>{{i18n "multilingual_post.onboarding.subtitle"}}</p>
+        <p class="mp-suggested-hint">
+          {{i18n "multilingual_post.onboarding.suggested"}}:
+          <strong>{{this.suggestedLocale}}</strong>
+        </p>
 
-      <button
-        type="button"
-        class="btn-link"
-        {{on "click" this.toggleTier2}}
-      >
-        {{i18n "multilingual_post.onboarding.show_more"}}
-      </button>
-
-      {{#if this.showTier2}}
-        <div class="mp-language-grid mp-tier2">
-          {{#each this.tier2 as |loc|}}
+        <div
+          class="mp-language-grid"
+          role="radiogroup"
+          aria-labelledby="mp-onboarding-title-1"
+        >
+          {{#each this.tier1 as |loc|}}
             <button
               type="button"
+              role="radio"
+              aria-checked={{if (eq loc.code this.selectedLocale) "true" "false"}}
               class="mp-language-card
+                {{if (eq loc.code this.suggestedLocale) 'suggested'}}
                 {{if (eq loc.code this.selectedLocale) 'selected'}}"
+              data-locale={{loc.code}}
               {{on "click" (fn this.selectLocale loc.code)}}
             >
-              <div>{{loc.label}}</div>
-              <small>{{loc.code}}</small>
+              <div class="mp-language-card__label">{{loc.label}}</div>
+              <small class="mp-language-card__code">{{loc.code}}</small>
             </button>
           {{/each}}
         </div>
-      {{/if}}
 
+        <button
+          type="button"
+          class="btn-link mp-show-tier2"
+          aria-expanded={{if this.showTier2 "true" "false"}}
+          {{on "click" this.toggleTier2}}
+        >
+          {{i18n "multilingual_post.onboarding.show_more"}}
+        </button>
+
+        {{#if this.showTier2}}
+          <div
+            class="mp-language-grid mp-tier2"
+            role="radiogroup"
+            aria-label={{i18n "multilingual_post.onboarding.tier2_aria"}}
+          >
+            {{#each this.tier2 as |loc|}}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={{if (eq loc.code this.selectedLocale) "true" "false"}}
+                class="mp-language-card
+                  {{if (eq loc.code this.selectedLocale) 'selected'}}"
+                data-locale={{loc.code}}
+                {{on "click" (fn this.selectLocale loc.code)}}
+              >
+                <div class="mp-language-card__label">{{loc.label}}</div>
+                <small class="mp-language-card__code">{{loc.code}}</small>
+              </button>
+            {{/each}}
+          </div>
+        {{/if}}
+
+        {{#if this.errorMessage}}
+          <div class="mp-onboarding-error" role="alert">
+            {{this.errorMessage}}
+          </div>
+        {{/if}}
+      </div>
+
+    {{else if (eq this.step 2)}}
+      <div class="mp-onboarding-step" data-step="2">
+        <h2 id="mp-onboarding-title-2">
+          {{i18n "multilingual_post.onboarding_username.title"}}
+        </h2>
+        <p>{{i18n "multilingual_post.onboarding_username.hint"}}</p>
+        <label
+          class="mp-username-label"
+          for="mp-onboarding-username-input"
+        >
+          {{i18n "multilingual_post.onboarding_username.label"}}
+        </label>
+        <Input
+          id="mp-onboarding-username-input"
+          @value={{this.username}}
+          @type="text"
+          autocomplete="username"
+          spellcheck="false"
+          aria-describedby="mp-onboarding-username-hint"
+        />
+        <small id="mp-onboarding-username-hint" class="mp-input-hint">
+          {{i18n "multilingual_post.onboarding_username.constraint"}}
+        </small>
+
+        {{#if this.errorMessage}}
+          <div class="mp-onboarding-error" role="alert">
+            {{this.errorMessage}}
+          </div>
+        {{/if}}
+      </div>
+
+    {{else if (eq this.step 3)}}
+      <div class="mp-onboarding-step" data-step="3">
+        <h2 id="mp-onboarding-title-3">
+          {{i18n "multilingual_post.onboarding_profile.title"}}
+        </h2>
+
+        <label for="mp-onboarding-bio" class="mp-input-label">
+          {{i18n "multilingual_post.onboarding_profile.bio_label"}}
+        </label>
+        <Textarea
+          id="mp-onboarding-bio"
+          @value={{this.bio}}
+          placeholder={{i18n "multilingual_post.onboarding_profile.bio_placeholder"}}
+          rows="3"
+        />
+
+        <fieldset>
+          <legend>
+            {{i18n "multilingual_post.onboarding_profile.spoken_languages"}}
+          </legend>
+          <div class="mp-spoken-grid">
+            {{#each this.tier1 as |loc|}}
+              <label class="mp-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={{includes this.spokenLanguages loc.code}}
+                  {{on "change" (fn this.toggleSpoken loc.code)}}
+                />
+                <span>{{loc.label}}</span>
+              </label>
+            {{/each}}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>
+            {{i18n "multilingual_post.onboarding_profile.open_to.title"}}
+          </legend>
+          <div class="mp-opento-grid">
+            {{#each this.openToOptions as |opt|}}
+              <label class="mp-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={{includes this.openTo opt}}
+                  {{on "change" (fn this.toggleOpenTo opt)}}
+                />
+                <span>
+                  {{i18n (concat "multilingual_post.onboarding_profile.open_to." opt)}}
+                </span>
+              </label>
+            {{/each}}
+          </div>
+        </fieldset>
+
+        {{#if this.errorMessage}}
+          <div class="mp-onboarding-error" role="alert">
+            {{this.errorMessage}}
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+  </:body>
+
+  <:footer>
+    {{#if (eq this.step 1)}}
       <button
         type="button"
         class="btn-primary"
-        disabled={{not this.selectedLocale}}
+        disabled={{or (not this.selectedLocale) this.saving}}
         {{on "click" this.saveLocale}}
       >
         {{i18n "multilingual_post.onboarding.save"}}
       </button>
-    </div>
-
-  {{else if (eq this.step 2)}}
-    <div class="mp-onboarding-step">
-      <h2>{{i18n "multilingual_post.onboarding_username.title"}}</h2>
-      <p>{{i18n "multilingual_post.onboarding_username.hint"}}</p>
-      <Input @value={{this.username}} @type="text" />
+    {{else if (eq this.step 2)}}
       <button
         type="button"
         class="btn-primary"
+        disabled={{this.saving}}
         {{on "click" this.saveUsername}}
       >
         {{i18n "multilingual_post.onboarding_username.save"}}
       </button>
-    </div>
-
-  {{else if (eq this.step 3)}}
-    <div class="mp-onboarding-step">
-      <h2>{{i18n "multilingual_post.onboarding_profile.title"}}</h2>
-
-      <Textarea
-        @value={{this.bio}}
-        placeholder={{i18n "multilingual_post.onboarding_profile.bio_placeholder"}}
-      />
-
-      <h3>{{i18n "multilingual_post.onboarding_profile.spoken_languages"}}</h3>
-      <div class="mp-spoken-grid">
-        {{#each this.tier1 as |loc|}}
-          <label>
-            <input
-              type="checkbox"
-              checked={{includes this.spokenLanguages loc.code}}
-              {{on "change" (fn this.toggleSpoken loc.code)}}
-            />
-            {{loc.label}}
-          </label>
-        {{/each}}
-      </div>
-
-      <h3>{{i18n "multilingual_post.onboarding_profile.open_to.title"}}</h3>
-      <div class="mp-opento-grid">
-        {{#each this.openToOptions as |opt|}}
-          <label>
-            <input
-              type="checkbox"
-              checked={{includes this.openTo opt}}
-              {{on "change" (fn this.toggleOpenTo opt)}}
-            />
-            {{i18n (concat "multilingual_post.onboarding_profile.open_to." opt)}}
-          </label>
-        {{/each}}
-      </div>
-
+    {{else if (eq this.step 3)}}
       <div class="mp-onboarding-actions">
         <button
           type="button"
-          class="btn-link"
+          class="btn-flat"
+          disabled={{this.saving}}
           {{on "click" this.skipProfile}}
         >
           {{i18n "multilingual_post.onboarding_profile.skip"}}
@@ -118,11 +212,12 @@
         <button
           type="button"
           class="btn-primary"
+          disabled={{this.saving}}
           {{on "click" this.saveProfile}}
         >
           {{i18n "multilingual_post.onboarding_profile.save"}}
         </button>
       </div>
-    </div>
-  {{/if}}
-</div>
+    {{/if}}
+  </:footer>
+</DModal>

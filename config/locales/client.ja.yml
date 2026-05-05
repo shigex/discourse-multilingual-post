@@ -10,13 +10,17 @@ ja:
         subtitle: "投稿はこの言語で表示します。いつでも切り替えできます。"
         suggested: "ブラウザの設定から推測"
         show_more: "他の言語を表示"
+        tier2_aria: "追加の言語 (オンデマンド翻訳)"
         save: "次へ"
       onboarding_username:
         title: "ユーザー名を決めてください"
         hint: "他の住人に表示される名前です。表示名はあとで変更できます。"
+        label: "ユーザー名"
+        constraint: "3〜20文字、半角英数字とアンダースコア。"
         save: "次へ"
       onboarding_profile:
         title: "あなたについてひとこと（任意）"
+        bio_label: "ひとこと自己紹介"
         bio_placeholder: "自己紹介を一言..."
         spoken_languages: "話せる言語"
         open_to:
@@ -32,6 +36,9 @@ ja:
         text: "🌱 まだプロフィールが空です。一言だけでも書いてみると、他の住人があなたのことを知るきっかけになります。"
         edit: "プロフィールを編集"
         dismiss: "閉じる"
+        dismiss_aria: "1週間表示しない"
         later: "あとで"
+        aria_label: "プロフィール設定のお知らせ"
       empty_bio_placeholder: "🌱 まだ自己紹介がありません"
       language_picker_label: "表示言語"
+      language_picker_menu_aria: "表示言語を選択"

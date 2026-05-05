@@ -1,16 +1,45 @@
+{{!--
+  Soft nudge banner. Rendered above the main container by the
+  `above-main-container` connector. Uses role="status" so screen-reader users
+  hear it without it grabbing focus aggressively (would be `alert` for that).
+
+  Buttons all have explicit aria-labels because the visible text is short and
+  the surrounding context (banner) may be skipped by some AT.
+--}}
 {{#if this.shouldShow}}
-  <div class="mp-empty-profile-banner">
+  <div
+    class="mp-empty-profile-banner"
+    role="status"
+    aria-live="polite"
+    aria-label={{i18n "multilingual_post.empty_profile_banner.aria_label"}}
+    {{on "keydown" this.onKeydown}}
+  >
     <span class="mp-banner-text">
       {{i18n "multilingual_post.empty_profile_banner.text"}}
     </span>
     <span class="mp-banner-actions">
-      <button type="button" class="mp-banner-edit" {{on "click" this.edit}}>
+      <button
+        type="button"
+        class="mp-banner-edit btn-primary"
+        aria-label={{i18n "multilingual_post.empty_profile_banner.edit"}}
+        {{on "click" this.edit}}
+      >
         {{i18n "multilingual_post.empty_profile_banner.edit"}}
       </button>
-      <button type="button" class="mp-banner-later" {{on "click" this.later}}>
+      <button
+        type="button"
+        class="mp-banner-later btn-flat"
+        aria-label={{i18n "multilingual_post.empty_profile_banner.later"}}
+        {{on "click" this.later}}
+      >
         {{i18n "multilingual_post.empty_profile_banner.later"}}
       </button>
-      <button type="button" class="mp-banner-dismiss" {{on "click" this.dismiss}}>
+      <button
+        type="button"
+        class="mp-banner-dismiss btn-flat"
+        aria-label={{i18n "multilingual_post.empty_profile_banner.dismiss_aria"}}
+        {{on "click" this.dismiss}}
+      >
         {{i18n "multilingual_post.empty_profile_banner.dismiss"}}
       </button>
     </span>

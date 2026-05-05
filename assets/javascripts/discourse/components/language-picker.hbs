@@ -1,18 +1,61 @@
-<div class="mp-language-picker" role="button" {{on "click" this.toggle}}>
-  <span class="mp-current-language">🌐 {{this.currentLabel}} ▾</span>
-</div>
+{{!--
+  Header language picker. Implemented as a true menu-button (not a div with
+  role="button") so screen readers and keyboard users get the right semantics:
+    - aria-haspopup + aria-expanded on the trigger
+    - role="menu" + role="menuitem" on the popup
+    - Esc / ArrowDown / ArrowUp handled by the component
+    - {{on-click-outside}} closes the menu when focus leaves
 
-{{#if this.open}}
-  <div class="mp-language-dropdown">
-    {{#each this.locales as |loc|}}
-      <button
-        type="button"
-        class="mp-language-option"
-        {{on "click" (fn this.select loc.code)}}
-      >
-        <span class="mp-locale-code">{{loc.code}}</span>
-        <span class="mp-locale-label">{{loc.label}}</span>
-      </button>
-    {{/each}}
-  </div>
-{{/if}}
+  We deliberately do NOT use a Discourse DropdownSelectBoxComponent here — the
+  full set of 15 locales with native-script labels is awkward to feed through
+  that API, and we want full control over keyboard semantics for accessibility.
+--}}
+<div class="mp-language-picker-wrapper">
+  <button
+    type="button"
+    class="mp-language-picker btn-flat"
+    aria-haspopup="menu"
+    aria-expanded={{if this.open "true" "false"}}
+    aria-label={{i18n "multilingual_post.language_picker_label"}}
+    title={{i18n "multilingual_post.language_picker_label"}}
+    {{on "click" this.toggle}}
+    {{on "keydown" this.onTriggerKeydown}}
+    {{did-insert this.registerTrigger}}
+  >
+    <span class="mp-current-language" aria-hidden="true">
+      🌐 {{this.currentLabel}} ▾
+    </span>
+  </button>
+
+  {{#if this.open}}
+    <ul
+      class="mp-language-dropdown"
+      role="menu"
+      aria-label={{i18n "multilingual_post.language_picker_menu_aria"}}
+      {{on "keydown" this.onMenuKeydown}}
+      {{did-insert this.registerMenu}}
+      {{will-destroy this.unregisterMenu}}
+    >
+      {{#each this.locales as |loc|}}
+        <li role="none">
+          <button
+            type="button"
+            role="menuitem"
+            class="mp-language-option
+              {{if (eq loc.code this.currentLocale) 'is-current'}}"
+            data-locale={{loc.code}}
+            data-tier={{loc.tier}}
+            aria-current={{if (eq loc.code this.currentLocale) "true" "false"}}
+            disabled={{this.saving}}
+            {{on "click" (fn this.select loc.code)}}
+          >
+            <span class="mp-locale-label">{{loc.label}}</span>
+            <span class="mp-locale-code" aria-hidden="true">
+              {{loc.code}}
+            </span>
+          </button>
+        </li>
+      {{/each}}
+    </ul>
+  {{/if}}
+</div>
